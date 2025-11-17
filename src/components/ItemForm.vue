@@ -19,76 +19,43 @@
       {{ isEditMode ? 'Update' : 'Add' }}
     </button>
 
-    <button v-if="isEditMode" type="button" class="btn btn-secondary" @click="$emit('cancel')">
+    <button v-if="isEditMode" type="button" class="btn btn-secondary" @click="cancel">
       Cancel
     </button>
   </form>
 </template>
 
-<script>
-import { reactive, watch, computed, onMounted } from "vue";
+<script setup>
+import { reactive, computed, watch } from 'vue';
 
-export default {
-  name: "ItemForm",
-  emits: ["submit", "cancel"],
-  props: {
-    initialData: {
-      type: Object,
-      default: () => ({
-        id: null,
-        name: "",
-        price: 0,
-        quantity: 1,
-      }),
-    },
-  },
+// Props and Emits
+const props = defineProps({
+  initialData: {
+    type: Object,
+    default: () => ({ id: null, name: '', price: 0, quantity: 1 })
+  }
+});
+const emit = defineEmits(['submit', 'cancel']);
 
-  setup(props, { emit }) {
-    const STORAGE_KEY = "item_form_data";
+// Reactive form
+const form = reactive({ ...props.initialData });
 
-    // Load saved data if exists
-    const saved = localStorage.getItem(STORAGE_KEY);
-    const form = reactive(saved ? JSON.parse(saved) : { ...props.initialData });
+// Watch parent changes and update form
+watch(() => props.initialData, (newVal) => {
+  Object.assign(form, newVal);
+});
 
-    // Update form when initialData changes
-    watch(
-      () => props.initialData,
-      (newVal) => {
-        Object.assign(form, newVal);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(form)); // save to disk
-      }
-    );
+// Computed: edit mode
+const isEditMode = computed(() => form.id !== null);
 
-    // Watch form and save changes to localStorage
-    watch(
-      form,
-      () => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(form));
-      },
-      { deep: true }
-    );
+// Submit
+const handleSubmit = () => {
+  emit('submit', { ...form });
+};
 
-    const isEditMode = computed(() => form.id !== null);
-
-    const handleSubmit = () => {
-      emit("submit", { ...form });
-
-      // Clear localStorage after successful save
-      localStorage.removeItem(STORAGE_KEY);
-    };
-
-    return {
-      form,
-      isEditMode,
-      handleSubmit,
-    };
-  },
+// Cancel
+const cancel = () => {
+  emit('cancel');               // Notify parent
+  Object.assign(form, props.initialData); // Reset form locally
 };
 </script>
-
-<style scoped>
-input.is-invalid {
-  border-color: #dc3545;
-  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-}
-</style>

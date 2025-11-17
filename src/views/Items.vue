@@ -1,76 +1,79 @@
 <template>
-  <div>
-    <div class="card shadow-sm mb-4">
-      <div class="card-body">
-        <h2 class="card-title mb-4">Item Management</h2>
+  <div class="container mt-5">
+    <div class="card shadow-sm p-4">
+      <h2 class="mb-4">Item Management</h2>
 
-        <!-- Form always visible -->
-        <item-form
-          :initialData="currentItem"
-          @submit="onSubmit"
-        />
+      <ItemForm
+        :initialData="currentItem"
+        @submit="onSubmit"
+        @cancel="cancelEdit"
+      />
 
-        <item-list
-          :items="items"
-          @edit="editItem"
-          @delete="deleteItem"
-        />
-      </div>
+      <ItemList
+        :items="items"
+        @edit="editItem"
+        @delete="deleteItem"
+      />
     </div>
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref, watch, onMounted } from 'vue';
 import ItemForm from '../components/ItemForm.vue';
 import ItemList from '../components/ItemList.vue';
 
-export default {
-  name: 'Items',
-  components: { ItemForm, ItemList },
+// LocalStorage key
+const LS_KEY = 'sarisari_store_items';
 
-  setup() {
-    const LS_KEY = 'sarisari_store_items';
-    const items = ref([]);
-    const currentItem = ref({ id: null, name: '', price: 0, quantity: 1 });
+// Reactive items
+const items = ref([]);
 
-    // Load items from localStorage
-    onMounted(() => {
-      const stored = localStorage.getItem(LS_KEY);
-      items.value = stored ? JSON.parse(stored) : [];
-    });
+// Current item for editing
+const currentItem = ref({ id: null, name: '', price: 0, quantity: 1 });
 
-    // Save items to localStorage
-    watch(items, (newItems) => {
-      localStorage.setItem(LS_KEY, JSON.stringify(newItems));
-    }, { deep: true });
+// Load items from localStorage
+onMounted(() => {
+  const stored = localStorage.getItem(LS_KEY);
+  items.value = stored ? JSON.parse(stored) : [];
+});
 
-    const onSubmit = (item) => {
-      if (item.id === null) {
-        // Add new
-        item.id = Date.now();
-        items.value.push(item);
-      } else {
-        // Update existing
-        const index = items.value.findIndex(i => i.id === item.id);
-        if (index !== -1) items.value[index] = item;
-      }
+// Save to localStorage
+watch(items, (newItems) => {
+  localStorage.setItem(LS_KEY, JSON.stringify(newItems));
+}, { deep: true });
 
-      // Reset form after submit
-      currentItem.value = { id: null, name: '', price: 0, quantity: 1 };
-    };
-
-    const editItem = (item) => {
-      currentItem.value = { ...item };
-    };
-
-    const deleteItem = (id) => {
-      if (confirm('Delete this item?')) {
-        items.value = items.value.filter(i => i.id !== id);
-      }
-    };
-
-    return { items, currentItem, onSubmit, editItem, deleteItem };
+// Handle submit
+const onSubmit = (item) => {
+  if (item.id === null) {
+    item.id = Date.now();
+    items.value.push(item);
+  } else {
+    const index = items.value.findIndex(i => i.id === item.id);
+    if (index !== -1) items.value[index] = { ...item };
   }
+  resetForm();
+};
+
+// Edit
+const editItem = (item) => {
+  currentItem.value = { ...item };
+};
+
+// Delete
+const deleteItem = (id) => {
+  if (confirm('Delete this item?')) {
+    items.value = items.value.filter(i => i.id !== id);
+  }
+};
+
+// Cancel
+const cancelEdit = () => {
+  resetForm();
+};
+
+// Reset form
+const resetForm = () => {
+  currentItem.value = { id: null, name: '', price: 0, quantity: 1 };
 };
 </script>

@@ -8,15 +8,15 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import ProductCard from '../components/ProductCard.vue';
+import { reactive } from 'vue';
 
-export default {
-  components: { ProductCard },
-  data() {
-    return {
-      demoProduct: { id: 1, name: 'Skyflakes', price: 17, stock: 30 }
-    }
-  }
-}
+const demoProduct = reactive({
+  id: 1,
+  name: 'Skyflakes',
+  price: 17,
+  stock: 30
+});
 </script>
+

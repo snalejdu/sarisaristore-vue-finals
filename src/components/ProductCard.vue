@@ -10,8 +10,11 @@
   </div>
 </template>
 
-<script>
-export default {
-  props: ['product']
-}
+<script setup>
+const props = defineProps({
+  product: {
+    type: Object,
+    required: true
+  }
+});
 </script>
